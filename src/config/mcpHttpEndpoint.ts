@@ -6,7 +6,7 @@ import {
 } from "../domain/configurationErrors.js";
 import { err, ok, type Result } from "../domain/result.js";
 
-/** The loopback default keeps the listener local-only until an operator opts out. */
+/** HTTP listeners verify the bound address is loopback before serving tools. */
 export const DEFAULT_MCP_HTTP_HOST = "127.0.0.1";
 /** Port 0 asks the host for an ephemeral port, reported by the listening log line. */
 export const DEFAULT_MCP_HTTP_PORT = 0;

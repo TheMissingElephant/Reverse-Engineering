@@ -6,11 +6,20 @@ selected filesystem state. Use it to compare two direct runs of the same
 scenario, such as an authority build and a reconstruction. It does not replay a
 previous execution or emulate dependencies.
 
-The command runs with the current user's permissions and inherits the host
-environment before applying the scenario's explicit overrides. This is not a
-sandbox. Filesystem observation paths select what REA snapshots; they do not
-restrict what the process can read or write. The inherited environment is not
-recorded, so its influence may remain unknown.
+The command runs with the current user's permissions. It inherits only basic
+host settings: `PATH`, `HOME`, `USER`, `LOGNAME`, `SHELL`, `LANG`, standard `LC_*`
+locale categories, `TERM`,
+`TZ`, `TMPDIR`, `TMP`, `TEMP`, `SystemRoot`, `WINDIR`, `COMSPEC`, and `PATHEXT`.
+Other host variables, including API tokens, SSH-agent sockets, and runtime-loader
+hooks, are not inherited. Required application variables must be selected in the
+scenario's explicit `environment` overrides; those values are recorded in
+Evidence, so avoid putting secrets there. Use an isolated environment for unknown
+programs. This filtering is not a sandbox: the command can still read files and
+use the network with your permissions. Filesystem observation paths select what
+REA snapshots; they do not restrict access. Inherited basic settings are not
+recorded, so their influence may remain unknown. New comparison contracts carry
+`process_environment_version: "minimal-host-v1"` to distinguish this policy from
+older captures that inherited the whole environment.
 
 The installed PTY backend cannot preserve an explicit environment name
 `__proto__`. REA rejects that override before launch; use `/usr/bin/env` with

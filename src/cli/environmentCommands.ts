@@ -701,7 +701,9 @@ export const registerEnvironmentCommands = (
         .string()
         .min(1)
         .optional()
-        .describe("Listener address; default MCP_HOST, else 127.0.0.1"),
+        .describe(
+          "Loopback listener address; default MCP_HOST, else 127.0.0.1",
+        ),
       port: mcpHttpListenerPortSchema
         .optional()
         .describe(

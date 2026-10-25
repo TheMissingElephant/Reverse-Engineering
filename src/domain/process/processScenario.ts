@@ -149,6 +149,7 @@ export const processComparisonContract = (
   working_directory: scenario.working_directory,
   environment: scenario.environment,
   ambient_environment: "unknown",
+  process_environment_version: "minimal-host-v1",
   filesystem_observation_paths: scenario.filesystem_observation_paths,
   terminal: scenario.terminal,
   // Input bytes are intentionally absent from compatibility identity. Their

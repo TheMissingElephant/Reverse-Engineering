@@ -32,6 +32,10 @@
 > Follow the installation and release links from these official sources. A similar
 > repository name or copied README does not establish that a download is official.
 
+> This fork's security-hardening branch is a source patch, not an official npm
+> release. See `docs/fork-security-hardening.md` for build and migration
+> instructions to evaluate the patched checkout.
+
 <div align="center">
 
 <br />

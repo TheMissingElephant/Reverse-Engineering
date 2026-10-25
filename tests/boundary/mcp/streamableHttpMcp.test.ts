@@ -6,7 +6,10 @@ import { describe, expect, onTestFinished } from "vitest";
 
 import { advertisedMcpToolSchemas } from "../../fixtures/advertisedMcpTool.js";
 import { expectForeignHostRefused } from "../../support/http/rawRequest.js";
-import { startMcpHttpProcess } from "../../support/mcp/streamableHttpProcess.js";
+import {
+  startListeningProcess,
+  startMcpHttpProcess,
+} from "../../support/mcp/streamableHttpProcess.js";
 import { processTest } from "../../support/process/processFixture.js";
 import { assertAdvertisedMcpContracts } from "./mcpContractHarness.js";
 
@@ -35,7 +38,7 @@ const expectIdentity = async ({
     { name: "binary_session", arguments: {} },
     { toolDefinition },
   );
-  expect(identity.isError).toBeFalsy();
+  expect(identity.isError, JSON.stringify(identity)).toBeFalsy();
   expect(identity.structuredContent).toMatchObject({
     result: {
       server_identity: { package: { version: expect.any(String) } },
@@ -44,6 +47,26 @@ const expectIdentity = async ({
 };
 
 describe("rea mcp --http", () => {
+  processTest.for([
+    {
+      name: "host flag",
+      arguments: ["mcp", "--http", "--host", "0.0.0.0"],
+      environment: {},
+    },
+    {
+      name: "MCP_HOST",
+      arguments: ["mcp", "--http"],
+      environment: { MCP_HOST: "0.0.0.0" },
+    },
+  ])(
+    "rejects a network-facing $name before announcing an MCP endpoint",
+    async ({ arguments: arguments_, environment }, { processes }) => {
+      await expect(
+        startListeningProcess(processes, arguments_, environment),
+      ).rejects.toThrow("Listener exited early (1, null)");
+    },
+  );
+
   processTest(
     "serves initialize, tools/list, a tool call and DELETE, then keeps serving later clients",
     async ({ processes }) => {

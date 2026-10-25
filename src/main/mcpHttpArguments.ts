@@ -18,7 +18,7 @@ const MCP_HTTP_OPTIONS = z.object({
     .string()
     .min(1)
     .optional()
-    .describe("Listener address; default MCP_HOST, else 127.0.0.1"),
+    .describe("Loopback listener address; default MCP_HOST, else 127.0.0.1"),
   port: mcpHttpListenerPortSchema
     .optional()
     .describe("Listener port; default MCP_PORT, else 0 for an ephemeral port"),

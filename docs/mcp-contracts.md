@@ -720,10 +720,13 @@ as one JSON log line on stderr (`"msg":"MCP transport listening"` with `url`)
 at every `REA_LOG_LEVEL`, because an ephemeral port is otherwise unreachable;
 stdout stays unused.
 
-This endpoint uses plain HTTP without TLS or client authentication. Use it only
-within a trusted local or isolated environment; an explicit non-loopback bind
-makes the same tools and active analysis state reachable at that address. It
-does not provide separate users or independent target sessions. Standard client
+This endpoint uses plain HTTP without TLS or client authentication and refuses
+non-loopback binds before constructing the MCP server. Use `127.0.0.1`, `::1`, or
+a hostname that resolves to loopback; wildcard and LAN addresses are rejected,
+and a rejected listener is closed. Migrate existing `--host 0.0.0.0` or LAN
+configurations to a loopback address or the default stdio transport. The listener
+does not provide separate users or independent target sessions, and loopback is
+not an authorization boundary against other local processes. Standard client
 registrations continue to use a dedicated stdio process.
 
 The HTTP server is stateful and serves one client at a time on one server

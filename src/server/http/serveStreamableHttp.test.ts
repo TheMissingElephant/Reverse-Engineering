@@ -295,6 +295,30 @@ it("reports a port that cannot be bound as a typed listen error naming the cause
   await expect(failed).rejects.toThrow(/EADDRINUSE/u);
 });
 
+it.each(["0.0.0.0", "::"])(
+  "refuses an unauthenticated wildcard bind to %s and releases its listener",
+  async (host) => {
+    const { served } = await start();
+    const url = new URL(served.url);
+    await served.close();
+    const factory = vi.fn(() => createEchoServer(() => undefined));
+    const failed = serveStreamableHttp({
+      host,
+      port: Number(url.port),
+      createMcpServer: factory,
+    }).then((unexpected) => {
+      servers.push(unexpected);
+      return unexpected;
+    });
+    await expect(failed).rejects.toBeInstanceOf(StreamableHttpListenError);
+    await expect(failed).rejects.toThrow("must bind to loopback");
+    expect(factory).not.toHaveBeenCalled();
+    await expect(rawHttpRequest(url)).rejects.toMatchObject({
+      code: "ECONNREFUSED",
+    });
+  },
+);
+
 it("keeps the SDK loopback allowlist, plus the bind's own hostname, for every loopback spelling", () => {
   const sdk = ["localhost", "127.0.0.1", "[::1]"];
   expect(hostHeaderAllowlist("127.0.0.1", "127.0.0.1")).toEqual(sdk);

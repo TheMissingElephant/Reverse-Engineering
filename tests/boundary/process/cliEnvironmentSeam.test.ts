@@ -12,7 +12,7 @@ import { parseEvidence } from "../../../src/domain/evidence.js";
 import { parseProcessCapture } from "../../../src/domain/process/processCaptureParsing.js";
 
 describe("the CLI takes its environment as an input", () => {
-  it("resolves from injected PATH and inherits injected env with scenario overrides", async ({
+  it("resolves from injected PATH without leaking other host variables and applies overrides", async ({
     skip,
   }) => {
     const capability = await probeProcessCaptureCapability();
@@ -31,7 +31,7 @@ describe("the CLI takes its environment as an input", () => {
         executable,
         [
           "#!/bin/sh",
-          'printf "%s|%s\\n" "$REA_CAPTURE_INJECTED_MARKER" "$REA_CAPTURE_SCENARIO_OVERRIDE"',
+          'printf "%s|%s|%s\\n" "$LANG" "${REA_CAPTURE_INJECTED_MARKER-unset}" "$REA_CAPTURE_SCENARIO_OVERRIDE"',
         ].join("\n"),
       );
       await chmod(executable, 0o755);
@@ -46,6 +46,7 @@ describe("the CLI takes its environment as an input", () => {
 
       const result = await captureProcessScenarioFile(scenarioPath, {
         PATH: bin,
+        LANG: "C",
         REA_CAPTURE_INJECTED_MARKER: "injected-value",
         REA_CAPTURE_SCENARIO_OVERRIDE: "host-value",
       });
@@ -56,7 +57,7 @@ describe("the CLI takes its environment as an input", () => {
       const evidence = parseEvidence(result);
       const capture = parseProcessCapture(evidence.normalized_result);
       expect(capture.frames.map(({ data }) => data).join("")).toContain(
-        "injected-value|scenario-value",
+        "C|unset|scenario-value",
       );
     } finally {
       await rm(root, { recursive: true, force: true });

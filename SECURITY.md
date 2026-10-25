@@ -24,6 +24,18 @@ provider-dependent behavior to be reproduced safely.
 
 ## Security boundary
 
+Standard MCP registrations use a dedicated stdio process. Optional HTTP listeners
+accept only loopback binds; network-facing and wildcard binds are rejected before
+tools are initialized. HTTP has no client authentication or TLS, so loopback does
+not provide isolation from other local processes or users.
+
+Process captures inherit only basic host settings, then apply explicit scenario
+environment overrides. Ambient credentials and runtime-loader hooks are excluded
+by default. Explicit overrides are recorded in Evidence; do not use them to pass
+secrets. Other provider and debugger workflows can retain their selected host
+environment and execute code with your permissions. Use an isolated environment
+for untrusted targets; this hardening does not make REA a sandbox.
+
 REA authenticates its Hopper and Ghidra bridges with per-session random
 capability tokens. POSIX uses current-user Unix sockets; Windows Ghidra uses
 authenticated loopback TCP with a private NTFS runtime whose DACL admits only

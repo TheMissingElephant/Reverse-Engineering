@@ -485,12 +485,12 @@ export const serveStreamableHttp = async (
       admissionLifetime: "response" as const,
     });
     if (stopped) return local(jsonError(503, -32000, "Server shutting down"));
+    if (allowedHosts === undefined)
+      return local(jsonError(503, -32000, "Server starting"));
     // One loopback allowlist gates Host (DNS rebinding) and Origin (browser pages); a missing Origin passes.
     const refused =
-      allowedHosts === undefined
-        ? undefined
-        : (hostHeaderValidationResponse(request, allowedHosts) ??
-          originValidationResponse(request, allowedHosts));
+      hostHeaderValidationResponse(request, allowedHosts) ??
+      originValidationResponse(request, allowedHosts);
     if (refused !== undefined) return local(refused);
     if (slot === undefined)
       return local(jsonError(503, -32000, "Server starting"));
@@ -553,6 +553,10 @@ export const serveStreamableHttp = async (
     url = endpointUrl(bound);
     origin = new URL(url).origin;
     allowedHosts = hostHeaderAllowlist(host, bound.address);
+    if (allowedHosts === undefined)
+      throw new TypeError(
+        "Unauthenticated MCP HTTP listeners must bind to loopback. Use 127.0.0.1 or ::1, or use the stdio transport.",
+      );
   } catch (cause: unknown) {
     await prepareTransportShutdown().catch(() => undefined);
     throw new StreamableHttpListenError(cause);
@@ -598,11 +602,6 @@ export const serveStreamableHttp = async (
     await close();
     throw options.signal.reason;
   }
-  if (allowedHosts === undefined)
-    logger?.warn(
-      { host },
-      "MCP HTTP Host header validation relaxed for a non-loopback bind",
-    );
   // The URL is the only way to reach an ephemeral port, so the announcement ignores the log threshold.
   logger
     ?.child({}, { level: "info" })

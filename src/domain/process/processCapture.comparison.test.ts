@@ -330,49 +330,50 @@ it.each([
   },
 );
 
-it("refuses mixed terminal observation versions even with PID and port rules disabled", () => {
-  const base = emptyCapture();
-  const scenario = processScenarioSchema.parse({
-    executable: "/usr/bin/true",
-    normalization: { pids: false, ports: false },
-  });
-  const committed = processScenarioCommitment(
-    scenario,
-    base.manifest.selected_executable_sha256 ?? undefined,
-  );
-  const contract = processComparisonContract(scenario);
-  expect(contract).not.toHaveProperty("pid_normalization_version");
-  expect(contract).not.toHaveProperty("port_normalization_version");
-  expect(contract.terminal_observation_version).toBe(
-    "deferred-rendered-journal-v1",
-  );
-  const capture = parseProcessCapture({
-    ...base,
-    normalization: scenario.normalization,
-    manifest: {
-      ...base.manifest,
-      scenario: committed,
-      full_scenario_sha256: digestProcessCommitment(committed),
-      normalization_sha256: digestProcessCommitment(scenario.normalization),
-      comparison_contract: contract,
-      comparison_contract_sha256: digestProcessCommitment(contract),
-    },
-  });
-  const legacyContract = { ...contract };
-  delete legacyContract.terminal_observation_version;
-  const legacy = parseProcessCapture({
-    ...capture,
-    manifest: {
-      ...capture.manifest,
-      comparison_contract: legacyContract,
-      comparison_contract_sha256: digestProcessCommitment(legacyContract),
-    },
-  });
-  expect(() => compareProcessCaptures(capture, legacy)).toThrow(
-    expect.objectContaining({
-      issues: [
-        expect.objectContaining({ expected: ["terminal_observation_version"] }),
-      ],
-    }),
-  );
-});
+it.each(["terminal_observation_version", "process_environment_version"])(
+  "refuses mixed %s even with PID and port rules disabled",
+  (versionKey) => {
+    const base = emptyCapture();
+    const scenario = processScenarioSchema.parse({
+      executable: "/usr/bin/true",
+      normalization: { pids: false, ports: false },
+    });
+    const committed = processScenarioCommitment(
+      scenario,
+      base.manifest.selected_executable_sha256 ?? undefined,
+    );
+    const contract = processComparisonContract(scenario);
+    expect(contract).not.toHaveProperty("pid_normalization_version");
+    expect(contract).not.toHaveProperty("port_normalization_version");
+    expect(contract.terminal_observation_version).toBe(
+      "deferred-rendered-journal-v1",
+    );
+    const capture = parseProcessCapture({
+      ...base,
+      normalization: scenario.normalization,
+      manifest: {
+        ...base.manifest,
+        scenario: committed,
+        full_scenario_sha256: digestProcessCommitment(committed),
+        normalization_sha256: digestProcessCommitment(scenario.normalization),
+        comparison_contract: contract,
+        comparison_contract_sha256: digestProcessCommitment(contract),
+      },
+    });
+    const legacyContract = { ...contract };
+    delete legacyContract[versionKey];
+    const legacy = parseProcessCapture({
+      ...capture,
+      manifest: {
+        ...capture.manifest,
+        comparison_contract: legacyContract,
+        comparison_contract_sha256: digestProcessCommitment(legacyContract),
+      },
+    });
+    expect(() => compareProcessCaptures(capture, legacy)).toThrow(
+      expect.objectContaining({
+        issues: [expect.objectContaining({ expected: [versionKey] })],
+      }),
+    );
+  },
+);

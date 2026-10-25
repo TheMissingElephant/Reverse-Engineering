@@ -150,14 +150,17 @@ it("keeps scenario identity without finalization while versioning corrected port
     "the full scenario commitment is unchanged",
   ).toBe("b50005d26269bd1db4a49c79e05bca67c3a18d837b45cd1c8ff591c01eb7623a");
   const comparison = processComparisonContract(scenario);
+  expect(comparison.process_environment_version).toBe("minimal-host-v1");
   expect(comparison.port_normalization_version).toBe("contextual-endpoints-v3");
   const {
     pid_normalization_version: pidVersion,
     terminal_observation_version: terminalVersion,
+    process_environment_version: environmentVersion,
     ...rootOnlyComparison
   } = comparison;
   expect(terminalVersion).toBe("deferred-rendered-journal-v1");
   expect(pidVersion).toBe("sampled-identifiers-v2");
+  expect(environmentVersion).toBe("minimal-host-v1");
   expect(
     digestProcessCommitment({
       ...rootOnlyComparison,
